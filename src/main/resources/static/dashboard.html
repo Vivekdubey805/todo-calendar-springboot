@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+
+    <style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
+    }
+
+    body {
+        background: linear-gradient(135deg, #edf2f7, #d6e4ff);
+        min-height: 100vh;
+    }
+
+    .navbar {
+        background: linear-gradient(90deg, #6c63ff, #564fd8);
+        color: white;
+        padding: 16px 35px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    }
+
+    .logo {
+        font-size: 23px;
+        font-weight: bold;
+        letter-spacing: 0.6px;
+    }
+
+    .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .profile {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255,255,255,0.18);
+        padding: 8px 14px;
+        border-radius: 25px;
+    }
+
+    .logout-btn {
+        background: white;
+        color: #6c63ff;
+        padding: 8px 14px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: bold;
+    }
+
+    .container {
+        width: 92%;
+        max-width: 850px;
+        margin: 45px auto;
+    }
+
+    .card {
+        background: white;
+        padding: 38px;
+        border-radius: 22px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+    }
+
+    h2 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 10px;
+        font-size: 30px;
+    }
+
+    p {
+        text-align: center;
+        color: #666;
+        margin-bottom: 28px;
+    }
+
+    form input {
+        width: 100%;
+        padding: 14px;
+        margin-bottom: 14px;
+        border: 1px solid #d0d7e2;
+        border-radius: 10px;
+        font-size: 15px;
+        transition: 0.3s;
+    }
+
+    form input:focus {
+        outline: none;
+        border-color: #6c63ff;
+        box-shadow: 0 0 6px rgba(108,99,255,0.25);
+    }
+
+    .btn {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(90deg, #6c63ff, #5848d8);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    .btn:hover {
+        transform: translateY(-1px);
+    }
+
+    .task-box {
+        margin-top: 35px;
+        background: #f8faff;
+        padding: 24px;
+        border-radius: 16px;
+    }
+
+    .task-box h3 {
+        color: #444;
+        margin-bottom: 18px;
+        font-size: 22px;
+    }
+
+    .task-card {
+        background: linear-gradient(135deg, #ffffff, #f9fbff);
+        padding: 18px;
+        margin-bottom: 16px;
+        border-radius: 14px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+        border-left: 5px solid #6c63ff;
+    }
+
+    .task-title {
+        font-size: 18px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 8px;
+    }
+
+    .task-desc {
+        color: #666;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .task-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+    }
+
+    .complete-btn {
+        padding: 8px 14px;
+        background: #22c55e;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .delete-btn {
+        padding: 8px 14px;
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .complete-btn:hover,
+    .delete-btn:hover {
+        opacity: 0.9;
+    }
+</style>
+</head>
+<body>
+
+<div class="navbar">
+    <div class="logo">To-Do Calendar Dashboard</div>
+
+    <div class="nav-right">
+        <div class="profile">
+            <span class="profile-icon">👤</span>
+            <span class="username" id="username">User</span>
+        </div>
+
+        <a href="/users/logout" class="logout-btn">Logout</a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="card">
+        <h2>Welcome 🎉</h2>
+        <p>Add your task below</p>
+
+        <form action="/users/add-task" method="post">
+    <input type="text" name="title" placeholder="Task Title" required>
+    <input type="text" name="description" placeholder="Task Description" required>
+    <input type="date" name="taskDate" required>
+    <input type="time" name="taskTime" required>
+    <button type="submit" class="btn">Add Task</button>
+</form>
+
+        <div class="task-box">
+            <h3>Your Tasks</h3>
+            <div id="taskList"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+let shownReminders = {};
+const reminderAudio = new Audio('https://www.soundjay.com/buttons/sounds/beep-01a.mp3');
+
+fetch('/users/current-user')
+    .then(response => response.text())
+    .then(user => {
+        document.getElementById('username').innerText = user;
+    });
+
+function loadTasks() {
+    fetch('/users/tasks')
+        .then(response => response.json())
+        .then(tasks => {
+            let output = '';
+            const now = new Date();
+
+            tasks.forEach(task => {
+
+                const taskDateTime = new Date(task.taskDate + 'T' + task.taskTime);
+
+                // Reminder alert + sound
+                if (
+                    taskDateTime.getFullYear() === now.getFullYear() &&
+                    taskDateTime.getMonth() === now.getMonth() &&
+                    taskDateTime.getDate() === now.getDate() &&
+                    taskDateTime.getHours() === now.getHours() &&
+                    taskDateTime.getMinutes() === now.getMinutes()
+                ) {
+                    if (!shownReminders[task.id]) {
+                        alert("Reminder: " + task.title);
+
+                        reminderAudio.currentTime = 0;
+                        reminderAudio.play().catch(error => {
+                            console.log("Sound blocked by browser:", error);
+                        });
+
+                        shownReminders[task.id] = true;
+                    }
+                }
+
+                // Completed style
+                const completedStyle = task.completed
+                    ? "text-decoration: line-through; opacity: 0.6;"
+                    : "";
+
+                output += `
+                    <div class="task-card" style="${completedStyle}">
+                        <div class="task-title">${task.title}</div>
+                        <div class="task-desc">${task.description}</div>
+                        <div class="task-desc">📅 ${task.taskDate}</div>
+                        <div class="task-desc">⏰ ${task.taskTime}</div>
+
+                        <div class="task-actions">
+
+                            <form action="/users/complete-task" method="post">
+                                <input type="hidden" name="id" value="${task.id}">
+                                <button class="complete-btn">Complete</button>
+                            </form>
+
+                            <form action="/users/delete-task" method="post">
+                                <input type="hidden" name="id" value="${task.id}">
+                                <button class="delete-btn">Delete</button>
+                            </form>
+
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('taskList').innerHTML = output;
+        });
+}
+
+loadTasks();
+setInterval(loadTasks, 10000);
+
+</script>
+</body>
+</html>
