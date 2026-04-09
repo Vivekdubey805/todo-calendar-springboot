@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Task</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
+
+body{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:
+        radial-gradient(circle at top left,#c7d2fe,#eef2ff 40%),
+        radial-gradient(circle at bottom right,#bfdbfe,#dbeafe 50%);
+}
+
+.container{
+    width:460px;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(14px);
+    border:1px solid rgba(255,255,255,0.4);
+    padding:42px;
+    border-radius:26px;
+    box-shadow:0 25px 60px rgba(0,0,0,0.12);
+}
+
+.header{
+    text-align:center;
+    margin-bottom:28px;
+}
+
+.header h2{
+    color:#1e293b;
+    font-size:28px;
+    margin-bottom:8px;
+}
+
+.header p{
+    color:#64748b;
+    font-size:14px;
+}
+
+input{
+    width:100%;
+    padding:15px;
+    margin-bottom:16px;
+    border:1px solid #dbeafe;
+    border-radius:14px;
+    font-size:15px;
+    background:#f8fafc;
+    transition:0.3s;
+}
+
+input:focus{
+    outline:none;
+    border-color:#4f46e5;
+    box-shadow:0 0 0 4px rgba(79,70,229,0.12);
+    background:white;
+}
+
+.btn-group{
+    display:flex;
+    gap:12px;
+    margin-top:8px;
+}
+
+button{
+    flex:1;
+    padding:14px;
+    border:none;
+    border-radius:14px;
+    font-size:15px;
+    cursor:pointer;
+    font-weight:600;
+    transition:0.3s;
+}
+
+.update-btn{
+    background:#4f46e5;
+    color:white;
+}
+
+.update-btn:hover{
+    background:#4338ca;
+}
+
+.cancel-btn{
+    background:#e2e8f0;
+    color:#334155;
+}
+
+.cancel-btn:hover{
+    background:#cbd5e1;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="header">
+    <h2>Edit Task ✏️</h2>
+    <p>Update your task professionally</p>
+</div>
+
+<form action="/users/update-task" method="post" id="editForm">
+
+    <input type="hidden" name="id" id="taskId">
+
+    <input type="text" name="title" id="title" placeholder="Task Title" required>
+
+    <input type="text" name="description" id="description" placeholder="Task Description" required>
+
+    <input type="date" name="taskDate" id="taskDate" required>
+
+    <input type="time" name="taskTime" id="taskTime" required>
+
+    <div class="btn-group">
+        <button type="submit" class="update-btn">Update Task</button>
+        <button type="button" class="cancel-btn"
+        onclick="window.location.href='/dashboard.html'">
+        Cancel
+        </button>
+    </div>
+
+</form>
+
+</div>
+
+<script>
+
+const params = new URLSearchParams(window.location.search);
+const taskId = params.get("id");
+
+// check id
+if (!taskId) {
+    alert("Task ID missing");
+    window.location = "/dashboard.html";
+}
+
+// hidden id
+document.getElementById('taskId').value = taskId;
+
+// load task
+fetch('/users/tasks')
+.then(response => response.json())
+.then(tasks => {
+
+    const task = tasks.find(t => t.id == taskId);
+
+    if(task){
+
+        document.getElementById('title').value = task.title;
+        document.getElementById('description').value = task.description;
+        document.getElementById('taskDate').value = task.taskDate;
+        document.getElementById('taskTime').value = task.taskTime;
+
+    } else {
+        alert("Task not found");
+        window.location = "/dashboard.html";
+    }
+});
+
+</script>
+
+</body>
+</html>

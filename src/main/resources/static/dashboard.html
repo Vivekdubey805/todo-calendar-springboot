@@ -1,299 +1,587 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
 
-    <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: Arial, sans-serif;
-    }
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
 
-    body {
-        background: linear-gradient(135deg, #edf2f7, #d6e4ff);
-        min-height: 100vh;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nathoasto Dashboard</title>
 
-    .navbar {
-        background: linear-gradient(90deg, #6c63ff, #564fd8);
-        color: white;
-        padding: 16px 35px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-    }
+<style>
 
-    .logo {
-        font-size: 23px;
-        font-weight: bold;
-        letter-spacing: 0.6px;
-    }
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Segoe UI',sans-serif;
+}
 
-    .nav-right {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-    }
+body{
+background:linear-gradient(135deg,#eef2ff,#f8fafc);
+min-height:100vh;
+color:#1e293b;
+}
 
-    .profile {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(255,255,255,0.18);
-        padding: 8px 14px;
-        border-radius: 25px;
-    }
+/* NAVBAR */
+.navbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:18px 50px;
+background:rgba(255,255,255,0.7);
+backdrop-filter:blur(16px);
+box-shadow:0 8px 30px rgba(0,0,0,0.05);
+position:sticky;
+top:0;
+z-index:100;
+}
 
-    .logout-btn {
-        background: white;
-        color: #6c63ff;
-        padding: 8px 14px;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: bold;
-    }
+.logo{
+font-size:22px;
+font-weight:700;
+color:#4f46e5;
+display:flex;
+flex-direction:column;
+}
 
-    .container {
-        width: 92%;
-        max-width: 850px;
-        margin: 45px auto;
-    }
+.tagline{
+font-size:12px;
+color:#64748b;
+font-weight:500;
+}
 
-    .card {
-        background: white;
-        padding: 38px;
-        border-radius: 22px;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.12);
-    }
+.nav-right{
+display:flex;
+align-items:center;
+gap:15px;
+}
 
-    h2 {
-        text-align: center;
-        color: #333;
-        margin-bottom: 10px;
-        font-size: 30px;
-    }
+.profile{
+background:#eef2ff;
+padding:10px 18px;
+border-radius:30px;
+font-weight:600;
+}
 
-    p {
-        text-align: center;
-        color: #666;
-        margin-bottom: 28px;
-    }
+.logout-btn{
+background:#4f46e5;
+color:white;
+padding:10px 18px;
+border-radius:12px;
+text-decoration:none;
+font-weight:600;
+}
 
-    form input {
-        width: 100%;
-        padding: 14px;
-        margin-bottom: 14px;
-        border: 1px solid #d0d7e2;
-        border-radius: 10px;
-        font-size: 15px;
-        transition: 0.3s;
-    }
+/* CONTAINER */
+.container{
+width:92%;
+max-width:1200px;
+margin:35px auto;
+}
 
-    form input:focus {
-        outline: none;
-        border-color: #6c63ff;
-        box-shadow: 0 0 6px rgba(108,99,255,0.25);
-    }
+/* HEADER */
+.header-section{
+margin-bottom:25px;
+}
 
-    .btn {
-        width: 100%;
-        padding: 14px;
-        background: linear-gradient(90deg, #6c63ff, #5848d8);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-size: 16px;
-        cursor: pointer;
-        transition: 0.3s;
-    }
+.header-section h1{
+font-size:28px;
+font-weight:700;
+}
 
-    .btn:hover {
-        transform: translateY(-1px);
-    }
+.header-section p{
+color:#64748b;
+margin-top:6px;
+}
 
-    .task-box {
-        margin-top: 35px;
-        background: #f8faff;
-        padding: 24px;
-        border-radius: 16px;
-    }
+/* GRID */
+.dashboard-grid{
+display:grid;
+grid-template-columns: 1fr 1fr;
+gap:25px;
+}
 
-    .task-box h3 {
-        color: #444;
-        margin-bottom: 18px;
-        font-size: 22px;
-    }
+/* CARD */
+.card{
+background:rgba(255,255,255,0.9);
+padding:30px;
+border-radius:24px;
+box-shadow:0 20px 40px rgba(0,0,0,0.06);
+transition:0.3s;
+}
 
-    .task-card {
-        background: linear-gradient(135deg, #ffffff, #f9fbff);
-        padding: 18px;
-        margin-bottom: 16px;
-        border-radius: 14px;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-        border-left: 5px solid #6c63ff;
-    }
+.card:hover{
+transform:translateY(-4px);
+}
 
-    .task-title {
-        font-size: 18px;
-        font-weight: bold;
-        color: #333;
-        margin-bottom: 8px;
-    }
+.card h2{
+margin-bottom:15px;
+}
 
-    .task-desc {
-        color: #666;
-        margin-bottom: 8px;
-        font-size: 14px;
-    }
+.card p{
+color:#64748b;
+margin-bottom:20px;
+}
 
-    .task-actions {
-        display: flex;
-        gap: 10px;
-        margin-top: 12px;
-    }
+/* FORM */
+input, select{
+width:100%;
+padding:14px;
+margin-bottom:14px;
+border:1px solid #dbeafe;
+border-radius:12px;
+}
 
-    .complete-btn {
-        padding: 8px 14px;
-        background: #22c55e;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-    }
+.btn{
+width:100%;
+padding:14px;
+background:#4f46e5;
+color:white;
+border:none;
+border-radius:12px;
+cursor:pointer;
+}
 
-    .delete-btn {
-        padding: 8px 14px;
-        background: #ef4444;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-    }
+/* CALENDAR */
+#monthCalendar{
+display:grid;
+grid-template-columns:repeat(7,1fr);
+gap:8px;
+margin-top:15px;
+}
 
-    .complete-btn:hover,
-    .delete-btn:hover {
-        opacity: 0.9;
-    }
+.day{
+min-height:55px;
+display:flex;
+justify-content:center;
+align-items:center;
+background:#f8fafc;
+border-radius:12px;
+cursor:pointer;
+font-weight:600;
+}
+
+.has-task{
+background:#4f46e5;
+color:white;
+}
+
+/* TASK */
+.task-box{
+margin-top:25px;
+}
+
+.task-card{
+background:white;
+padding:20px;
+border-radius:18px;
+margin-bottom:15px;
+box-shadow:0 10px 25px rgba(0,0,0,0.06);
+border-left:5px solid #4f46e5;
+}
+
+.task-title{
+font-size:18px;
+font-weight:700;
+}
+
+.task-desc{
+color:#64748b;
+margin-top:6px;
+}
+
+.task-actions{
+display:flex;
+gap:10px;
+margin-top:14px;
+}
+
+.complete-btn{background:#22c55e;}
+.edit-btn{background:#f59e0b;}
+.delete-btn{background:#ef4444;}
+
+.complete-btn,.edit-btn,.delete-btn{
+padding:8px 14px;
+border:none;
+border-radius:10px;
+color:white;
+cursor:pointer;
+}
+
+.complete-btn:hover,
+.edit-btn:hover,
+.delete-btn:hover{
+transform:scale(1.05);
+}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+.dashboard-grid{
+grid-template-columns:1fr;
+}
+}
+
 </style>
 </head>
 <body>
 
+<!-- NAVBAR -->
 <div class="navbar">
-    <div class="logo">To-Do Calendar Dashboard</div>
+<div class="logo">
+🚀 Nathoasto Globel Tech
+<span class="tagline">Productivity Suite</span>
+</div>
 
-    <div class="nav-right">
-        <div class="profile">
-            <span class="profile-icon">👤</span>
-            <span class="username" id="username">User</span>
-        </div>
-
-        <a href="/users/logout" class="logout-btn">Logout</a>
-    </div>
+<div class="nav-right">
+<div class="profile">👤 <span id="username">User</span></div>
+<a href="/users/logout" class="logout-btn">Logout</a>
+</div>
 </div>
 
 <div class="container">
-    <div class="card">
-        <h2>Welcome 🎉</h2>
-        <p>Add your task below</p>
 
-        <form action="/users/add-task" method="post">
-    <input type="text" name="title" placeholder="Task Title" required>
-    <input type="text" name="description" placeholder="Task Description" required>
-    <input type="date" name="taskDate" required>
-    <input type="time" name="taskTime" required>
-    <button type="submit" class="btn">Add Task</button>
+<div class="header-section">
+<h1>Welcome to Nathoasto Dashboard 🚀</h1>
+<p>Manage tasks, track productivity & stay ahead.</p>
+</div>
+
+<div class="dashboard-grid">
+
+<!-- ADD TASK -->
+<div class="card">
+<h2>Add New Task</h2>
+<p>Organize your work professionally</p>
+
+<form action="/users/add-task" method="post">
+<input type="text" name="title" placeholder="Task Title" required>
+<input type="text" name="description" placeholder="Task Description" required>
+<input type="date" name="taskDate" required>
+<input type="time" name="taskTime" required>
+<button type="submit" class="btn">Add Task</button>
 </form>
+</div>
 
-        <div class="task-box">
-            <h3>Your Tasks</h3>
-            <div id="taskList"></div>
-        </div>
-    </div>
+<!-- CALENDAR -->
+<div class="card">
+<h2>Task Calendar</h2>
+
+<select id="monthSelect" onchange="loadSelectedMonth()">
+<option value="0">January</option>
+<option value="1">February</option>
+<option value="2">March</option>
+<option value="3">April</option>
+<option value="4">May</option>
+<option value="5">June</option>
+<option value="6">July</option>
+<option value="7">August</option>
+<option value="8">September</option>
+<option value="9">October</option>
+<option value="10">November</option>
+<option value="11">December</option>
+</select>
+
+<div id="monthCalendar"></div>
+</div>
+
+</div>
+
+<!-- TASK LIST -->
+<div class="card task-box">
+<h2>Your Tasks</h2>
+<div id="taskList"></div>
+</div>
+<div class="card">
+<h3>💬 Team Chat</h3>
+
+<div id="chatBox" style="height:250px; overflow:auto; border:1px solid #ccc; padding:10px; margin-bottom:10px;"></div>
+
+<input type="text" id="msg" placeholder="Type message..." style="width:75%; padding:10px;">
+<button onclick="sendMessage()">Send</button>
+</div>
 </div>
 
 <script>
 
-let shownReminders = {};
-const reminderAudio = new Audio('https://www.soundjay.com/buttons/sounds/beep-01a.mp3');
+let allTasks = [];
+let alertedTasks = [];
+let stompClient = null;
 
-fetch('/users/current-user')
-    .then(response => response.text())
+/* ---------------- USER ---------------- */
+function loadCurrentUser(){
+    return fetch('/users/current-user')
+    .then(r => r.text())
     .then(user => {
-        document.getElementById('username').innerText = user;
+        const username = (user || "User").trim().toLowerCase();
+        document.getElementById('username').innerText = username;
+        return username;
+    })
+    .catch(() => {
+        document.getElementById('username').innerText = "user";
+        return "user";
     });
-
-function loadTasks() {
-    fetch('/users/tasks')
-        .then(response => response.json())
-        .then(tasks => {
-            let output = '';
-            const now = new Date();
-
-            tasks.forEach(task => {
-
-                const taskDateTime = new Date(task.taskDate + 'T' + task.taskTime);
-
-                // Reminder alert + sound
-                if (
-                    taskDateTime.getFullYear() === now.getFullYear() &&
-                    taskDateTime.getMonth() === now.getMonth() &&
-                    taskDateTime.getDate() === now.getDate() &&
-                    taskDateTime.getHours() === now.getHours() &&
-                    taskDateTime.getMinutes() === now.getMinutes()
-                ) {
-                    if (!shownReminders[task.id]) {
-                        alert("Reminder: " + task.title);
-
-                        reminderAudio.currentTime = 0;
-                        reminderAudio.play().catch(error => {
-                            console.log("Sound blocked by browser:", error);
-                        });
-
-                        shownReminders[task.id] = true;
-                    }
-                }
-
-                // Completed style
-                const completedStyle = task.completed
-                    ? "text-decoration: line-through; opacity: 0.6;"
-                    : "";
-
-                output += `
-                    <div class="task-card" style="${completedStyle}">
-                        <div class="task-title">${task.title}</div>
-                        <div class="task-desc">${task.description}</div>
-                        <div class="task-desc">📅 ${task.taskDate}</div>
-                        <div class="task-desc">⏰ ${task.taskTime}</div>
-
-                        <div class="task-actions">
-
-                            <form action="/users/complete-task" method="post">
-                                <input type="hidden" name="id" value="${task.id}">
-                                <button class="complete-btn">Complete</button>
-                            </form>
-
-                            <form action="/users/delete-task" method="post">
-                                <input type="hidden" name="id" value="${task.id}">
-                                <button class="delete-btn">Delete</button>
-                            </form>
-
-                        </div>
-                    </div>
-                `;
-            });
-
-            document.getElementById('taskList').innerHTML = output;
-        });
 }
 
-loadTasks();
-setInterval(loadTasks, 10000);
+/* ---------------- CHAT ---------------- */
+function connectChat(){
+
+    const socket = new SockJS('/chat');
+    stompClient = Stomp.over(socket);
+    stompClient.debug = null;
+
+    // 🔥 GET USERNAME FROM UI
+    const username = document.getElementById('username').innerText.trim().toLowerCase();
+
+    stompClient.connect({
+        username: username
+    }, function(){
+
+        console.log("✅ Chat Connected as:", username);
+
+        stompClient.subscribe('/user/queue/messages', function(message){
+
+            console.log("📩 USER RECEIVED:", message.body);
+
+            const msg = JSON.parse(message.body);
+            showMessage(msg);
+        });
+
+    }, function(error){
+        console.error("❌ Chat Error:", error);
+        setTimeout(connectChat, 5000);
+    });
+}
+
+function sendMessage(){
+
+    const input = document.getElementById('msg');
+    const msg = input.value.trim();
+
+    if(!msg) return alert("Enter message");
+
+    if(!stompClient || !stompClient.connected){
+        return alert("Chat not connected yet");
+    }
+
+    const username = document.getElementById('username').innerText.trim().toLowerCase();
+
+    stompClient.send("/app/sendToAdmin", {}, JSON.stringify({
+        sender: username,
+        receiver: "admin",
+        content: msg
+    }));
+
+    // 🔥 SHOW MESSAGE INSTANTLY
+    showMessage({
+        sender: username,
+        content: msg
+    });
+
+    input.value='';
+}
+
+function showMessage(message){
+
+    const chatBox = document.getElementById('chatBox');
+
+    const div = document.createElement("div");
+    div.style.marginBottom = "8px";
+
+    const sender = document.createElement("b");
+    sender.style.color = message.sender === 'admin' ? '#16a34a' : '#4f46e5';
+    sender.innerText = message.sender + ": ";
+
+    const text = document.createTextNode(message.content);
+
+    div.appendChild(sender);
+    div.appendChild(text);
+
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+/* ---------------- LOAD TASKS ---------------- */
+function loadTasks(){
+
+    fetch('/users/tasks')
+    .then(r=>{
+        if(!r.ok) throw new Error();
+        return r.json();
+    })
+    .then(tasks=>{
+        allTasks = tasks || [];
+        updateStats();
+        renderTasks();
+        loadSelectedMonth();
+    })
+    .catch(()=>{
+        document.getElementById('taskList').innerHTML =
+        `<div style="color:red;">Failed to load tasks</div>`;
+    });
+}
+
+/* ---------------- STATS ---------------- */
+function updateStats(){
+
+    const total = allTasks.length;
+    const completed = allTasks.filter(t=>t.completed).length;
+    const pending = total - completed;
+
+    document.getElementById('taskList').innerHTML = `
+        <div style="display:flex; gap:15px; margin-bottom:20px;">
+            <div class="card" style="flex:1;"><b>Total:</b> ${total}</div>
+            <div class="card" style="flex:1;"><b>Completed:</b> ${completed}</div>
+            <div class="card" style="flex:1;"><b>Pending:</b> ${pending}</div>
+        </div>
+        <div id="taskContainer"></div>
+    `;
+}
+
+/* ---------------- RENDER TASKS ---------------- */
+function renderTasks(){
+
+    const container = document.getElementById('taskContainer');
+    if(!container) return;
+
+    if(allTasks.length === 0){
+        container.innerHTML = `<div style="text-align:center;color:#64748b;">No tasks found</div>`;
+        return;
+    }
+
+    container.innerHTML = '';
+
+    allTasks.forEach(task=>{
+
+        const card = document.createElement("div");
+        card.className = "task-card";
+
+        if(task.completed){
+            card.style.opacity = "0.6";
+            card.style.textDecoration = "line-through";
+        }
+
+        card.innerHTML = `
+            <div class="task-title">${escapeHTML(task.title)}</div>
+            <div class="task-desc">${escapeHTML(task.description)}</div>
+            <div class="task-desc">📅 ${task.taskDate}</div>
+            <div class="task-desc">⏰ ${task.taskTime}</div>
+            <div class="task-actions">
+                <button class="complete-btn">✓</button>
+                <button class="edit-btn">Edit</button>
+                <button class="delete-btn">X</button>
+            </div>
+        `;
+
+        card.querySelector(".complete-btn").onclick = () => completeTask(task.id);
+        card.querySelector(".delete-btn").onclick = () => deleteTask(task.id);
+        card.querySelector(".edit-btn").onclick = () => {
+            window.location.href = `/edit-task.html?id=${task.id}`;
+        };
+
+        container.appendChild(card);
+    });
+}
+
+/* ---------------- SECURITY ---------------- */
+function escapeHTML(str){
+    return String(str).replace(/[&<>"']/g, function(m){
+        return {
+            '&':'&amp;',
+            '<':'&lt;',
+            '>':'&gt;',
+            '"':'&quot;',
+            "'":'&#39;'
+        }[m];
+    });
+}
+
+/* ---------------- TASK ACTIONS ---------------- */
+function completeTask(id){
+    fetch('/users/complete-task',{
+        method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body:`id=${id}`
+    }).then(loadTasks);
+}
+
+function deleteTask(id){
+    fetch('/users/delete-task',{
+        method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body:`id=${id}`
+    }).then(loadTasks);
+}
+
+/* ---------------- CALENDAR ---------------- */
+function loadSelectedMonth(){
+
+    const month = parseInt(document.getElementById('monthSelect').value);
+    const year = new Date().getFullYear();
+
+    const calendar = document.getElementById('monthCalendar');
+    calendar.innerHTML='';
+
+    const days = new Date(year, month+1, 0).getDate();
+    const firstDay = new Date(year, month, 1).getDay();
+
+    for(let i=0;i<firstDay;i++){
+        let blank=document.createElement('div');
+        blank.className='day';
+        blank.style.visibility='hidden';
+        calendar.appendChild(blank);
+    }
+
+    for(let d=1;d<=days;d++){
+
+        const fullDate=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const hasTask=allTasks.some(t=>t.taskDate===fullDate);
+
+        let div=document.createElement('div');
+        div.className=hasTask?'day has-task':'day';
+        div.innerText=d;
+
+        calendar.appendChild(div);
+    }
+}
+
+/* ---------------- REMINDER ---------------- */
+function checkReminders(){
+
+    if(Notification.permission !== "granted") return;
+
+    const now = new Date();
+
+    allTasks.forEach(task => {
+
+        const taskTime = new Date(task.taskDate + 'T' + task.taskTime);
+        const diff = taskTime - now;
+
+        if(diff > 0 && diff < 60000 && !alertedTasks.includes(task.id)){
+            new Notification("Reminder 🔔", { body: task.title });
+            alertedTasks.push(task.id);
+        }
+    });
+}
+
+/* ---------------- INIT ---------------- */
+window.onload = async () => {
+
+    document.getElementById('monthSelect').value = new Date().getMonth();
+
+    const username = await loadCurrentUser(); // 🔥 ensure username first
+
+    loadTasks();
+    connectChat(username); // 🔥 FIXED
+
+    Notification.requestPermission();
+
+    setInterval(checkReminders, 10000);
+};
 
 </script>
+
 </body>
-</html>
+</html> 

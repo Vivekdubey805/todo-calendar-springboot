@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nathoasto Admin</title>
+
+<!-- 🔥 CHAT LIBRARIES -->
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter','Segoe UI',sans-serif;}
+
+body{display:flex;min-height:100vh;background:#f8fafc;color:#0f172a;}
+
+.sidebar{
+width:260px;background:#111827;color:white;padding:25px;
+display:flex;flex-direction:column;justify-content:space-between;
+}
+
+.logo{font-size:20px;font-weight:700;margin-bottom:30px;}
+
+.sidebar button{
+width:100%;background:none;border:none;color:#cbd5e1;
+text-align:left;padding:12px;margin:6px 0;border-radius:10px;cursor:pointer;
+}
+
+.sidebar button:hover,.sidebar .active{background:#1f2937;color:white;}
+
+.main{flex:1;padding:25px;}
+
+.topbar{display:flex;justify-content:space-between;margin-bottom:20px;}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:20px;}
+
+.stat-card{background:white;padding:20px;border-radius:15px;}
+
+.card{background:white;padding:20px;border-radius:15px;margin-bottom:20px;}
+
+table{width:100%;border-collapse:collapse;}
+th,td{padding:10px;border-bottom:1px solid #eee;}
+
+.delete-btn{background:red;color:white;border:none;padding:5px 10px;border-radius:5px;}
+
+.status.completed{color:green;}
+.status.pending{color:orange;}
+
+.hidden{display:none;}
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+<div>
+<div class="logo">🚀 Nathoasto</div>
+<button class="active" onclick="showSection('dashboard',this)">Dashboard</button>
+<button onclick="showSection('users',this)">Users</button>
+<button onclick="showSection('tasks',this)">Tasks</button>
+</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<div class="topbar">
+<h2>Admin Dashboard</h2>
+<a href="/users/logout">Logout</a>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+<div class="stats">
+<div class="stat-card"><b>Total Users</b><h2 id="totalUsers">0</h2></div>
+<div class="stat-card"><b>Total Tasks</b><h2 id="totalTasks">0</h2></div>
+<div class="stat-card"><b>Completed</b><h2 id="completedTasks">0</h2></div>
+</div>
+</div>
+
+<!-- USERS -->
+<div id="usersSection" class="hidden">
+<div class="card">
+<h3>Users</h3>
+<input id="userSearch" placeholder="Search..." onkeyup="filterUsers()">
+<table>
+<thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Action</th></tr></thead>
+<tbody id="usersTable"></tbody>
+</table>
+</div>
+</div>
+
+<!-- TASKS -->
+<div id="tasksSection" class="hidden">
+<div class="card">
+<h3>Tasks</h3>
+<input id="taskSearch" placeholder="Search..." onkeyup="filterTasks()">
+<table>
+<thead><tr><th>Title</th><th>User</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+<tbody id="tasksTable"></tbody>
+</table>
+</div>
+</div>
+
+<!-- CHAT -->
+<div class="card">
+<h3>💬 Admin Chat</h3>
+
+<div id="adminChatBox" style="height:200px;overflow:auto;border:1px solid #ccc;padding:10px;margin-bottom:10px;"></div>
+
+<input id="adminMsg" placeholder="Type message..." style="width:70%;">
+<button onclick="sendAdminMessage()">Send</button>
+
+</div>
+
+</div>
+
+<script>
+
+let users = [], tasks = [];
+let adminStompClient = null;
+let currentUser = "";
+
+/* ---------------- NAV ---------------- */
+function showSection(section, btn){
+
+    ['dashboard','usersSection','tasksSection'].forEach(id=>{
+        document.getElementById(id).style.display='none';
+    });
+
+    document.querySelectorAll('.sidebar button')
+    .forEach(b=>b.classList.remove('active'));
+
+    if(btn) btn.classList.add('active');
+
+    if(section==='dashboard') document.getElementById('dashboard').style.display='block';
+    if(section==='users') document.getElementById('usersSection').style.display='block';
+    if(section==='tasks') document.getElementById('tasksSection').style.display='block';
+}
+
+/* ---------------- USERS ---------------- */
+function loadUsers(){
+fetch('/users/admin/users')
+.then(r=>r.json())
+.then(data=>{
+    users = data || [];
+    document.getElementById('totalUsers').innerText = users.length;
+    renderUsers(users);
+})
+.catch(()=>alert("Failed to load users"));
+}
+
+function renderUsers(data){
+
+    const table = document.getElementById('usersTable');
+    table.innerHTML = '';
+
+    data.forEach(u=>{
+
+        const tr = document.createElement('tr');
+
+        tr.onclick = () => selectUser(u.email, tr);
+
+        tr.innerHTML = `
+            <td>${escapeHTML(u.name)}</td>
+            <td>${escapeHTML(u.email)}</td>
+            <td>${escapeHTML(u.role)}</td>
+            <td><button class="delete-btn">Delete</button></td>
+        `;
+
+        tr.querySelector("button").onclick = (e)=>{
+            e.stopPropagation();
+            deleteUser(u.id);
+        };
+
+        table.appendChild(tr);
+    });
+}
+
+function filterUsers(){
+let val = document.getElementById('userSearch').value.toLowerCase();
+renderUsers(users.filter(u=>u.name.toLowerCase().includes(val)));
+}
+
+/* ---------------- TASKS ---------------- */
+function loadTasks(){
+fetch('/users/admin/tasks')
+.then(r=>r.json())
+.then(data=>{
+    tasks = data || [];
+    document.getElementById('totalTasks').innerText = tasks.length;
+    document.getElementById('completedTasks').innerText =
+        tasks.filter(t=>t.completed).length;
+
+    renderTasks(tasks);
+})
+.catch(()=>alert("Failed to load tasks"));
+}
+
+function renderTasks(data){
+
+    const table = document.getElementById('tasksTable');
+    table.innerHTML = '';
+
+    data.forEach(t=>{
+
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+            <td>${escapeHTML(t.title)}</td>
+            <td>${escapeHTML(t.userEmail)}</td>
+            <td>${t.taskDate}</td>
+            <td class="status ${t.completed?'completed':'pending'}">
+                ${t.completed?'Completed':'Pending'}
+            </td>
+            <td><button class="delete-btn">Delete</button></td>
+        `;
+
+        tr.querySelector("button").onclick = () => deleteTask(t.id);
+
+        table.appendChild(tr);
+    });
+}
+
+function filterTasks(){
+let val = document.getElementById('taskSearch').value.toLowerCase();
+renderTasks(tasks.filter(t=>t.title.toLowerCase().includes(val)));
+}
+
+/* ---------------- DELETE ---------------- */
+function deleteUser(id){
+fetch('/users/admin/delete-user?id='+id,{method:'POST'})
+.then(loadUsers)
+.catch(()=>alert("Delete failed"));
+}
+
+function deleteTask(id){
+fetch('/users/admin/delete-task?id='+id,{method:'POST'})
+.then(loadTasks)
+.catch(()=>alert("Delete failed"));
+}
+
+/* ---------------- CHAT ---------------- */
+function connectAdminChat(){
+
+    const socket = new SockJS('/chat');
+    adminStompClient = Stomp.over(socket);
+    adminStompClient.debug = null;
+
+    adminStompClient.connect({
+        username: "admin"
+    }, function(){
+
+        console.log("✅ Admin Chat Connected");
+
+        adminStompClient.subscribe('/user/queue/messages', function(message){
+
+            console.log("📩 ADMIN RECEIVED:", message.body);
+
+            const msg = JSON.parse(message.body);
+            showAdminMessage(msg);
+
+            currentUser = msg.sender;
+        });
+
+    }, function(error){
+        console.error("❌ Chat Error:", error);
+        setTimeout(connectAdminChat, 5000);
+    });
+}
+
+function sendAdminMessage(){
+
+    let input = document.getElementById('adminMsg');
+    let msg = input.value.trim();
+
+    if(!msg) return alert("Enter message");
+    if(!currentUser) return alert("Select user first");
+
+    adminStompClient.send("/app/sendToUser", {}, JSON.stringify({
+        sender: "admin",
+        receiver: currentUser,
+        content: msg
+    }));
+
+    // 🔥 SHOW MESSAGE INSTANTLY
+    showAdminMessage({
+        sender: "admin",
+        content: msg
+    });
+
+    input.value='';
+}
+
+function showAdminMessage(m){
+
+    const box = document.getElementById('adminChatBox');
+
+    const div = document.createElement("div");
+    div.innerHTML = `<b>${m.sender}:</b> ${m.content}`;
+
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+}
+/* ---------------- SELECT USER ---------------- */
+function selectUser(email, row){
+
+    currentUser = email;
+
+    // remove highlight
+    document.querySelectorAll("#usersTable tr").forEach(tr=>{
+        tr.style.background = "";
+    });
+
+    // highlight selected row
+    if(row){
+        row.style.background = "#dbeafe";
+    }
+
+    // update chat title (if exists)
+    const title = document.querySelector("h3");
+    if(title){
+        title.innerText = "💬 Chat with " + email;
+    }
+
+    console.log("✅ Selected user:", email);
+}
+/* ---------------- SECURITY ---------------- */
+function escapeHTML(str){
+    return String(str).replace(/[&<>"']/g,function(m){
+        return {
+            '&':'&amp;',
+            '<':'&lt;',
+            '>':'&gt;',
+            '"':'&quot;',
+            "'":'&#39;'
+        }[m];
+    });
+}
+
+/* ---------------- INIT ---------------- */
+window.onload = ()=>{
+    showSection('dashboard');
+    loadUsers();
+    loadTasks();
+    connectAdminChat(); // 🔥 FIXED
+};
+
+</script>
+
+</body>
+</html>

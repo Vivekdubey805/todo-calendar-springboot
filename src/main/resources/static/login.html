@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
         }
 
         body {
@@ -17,54 +18,121 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: linear-gradient(135deg, #89f7fe, #66a6ff);
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            overflow: hidden;
         }
 
         .container {
-            background: white;
-            padding: 35px;
-            width: 380px;
-            border-radius: 15px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            width: 400px;
+            background: rgba(255,255,255,0.96);
+            backdrop-filter: blur(14px);
+            padding: 42px;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.18);
+            transition: 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.22);
         }
 
         h2 {
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 28px;
+            color: #2d3748;
+            font-size: 30px;
+            font-weight: 700;
         }
 
-        input {
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 28px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group input {
             width: 100%;
-            padding: 12px;
-            margin-bottom: 18px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
+            padding: 14px 16px;
+            border: 1px solid #d0d7e2;
+            border-radius: 12px;
+            font-size: 15px;
+            background: #f8faff;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 8px rgba(102,126,234,0.25);
+            background: white;
         }
 
         button {
             width: 100%;
-            padding: 12px;
-            background: #4a90e2;
+            padding: 14px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
+            transition: 0.3s ease;
         }
 
         button:hover {
-            background: #357abd;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102,126,234,0.35);
+        }
+
+        .footer-text {
+            text-align: center;
+            margin-top: 18px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .footer-text a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer-text a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
+
 <div class="container">
-    <h2>Login</h2>
+    <h2>Welcome Back 👋</h2>
+    <div class="subtitle">Login to continue managing your tasks</div>
 
     <form action="/users/login" method="post">
-        <input type="email" name="email" placeholder="Enter email" required>
-        <input type="password" name="password" placeholder="Enter password" required>
+
+        <div class="input-group">
+            <input type="email" name="email" placeholder="Enter email" required>
+        </div>
+
+        <div class="input-group">
+            <input type="password" name="password" placeholder="Enter password" required>
+        </div>
+
         <button type="submit">Login</button>
+
     </form>
+
+    <div class="footer-text">
+        New user? <a href="/register.html">Create account</a>
+    </div>
 </div>
+
 </body>
 </html>
